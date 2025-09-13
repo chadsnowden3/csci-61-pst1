@@ -81,8 +81,8 @@ void m61_free(void* ptr, const char* file, int line) {
 void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
     // Your code here (not needed for first tests).
     void* ptr = m61_malloc(count * sz, file, line);
-    if (ptr) {
-        memset(ptr, 0, count * sz);
+    if (ptr !=nullptr) {
+        memset(ptr, 0, count * sz); // clear memory to 0
     }
     return ptr;
 }
