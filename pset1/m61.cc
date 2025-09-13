@@ -92,8 +92,16 @@ void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
 ///    Return the current memory statistics.
 
 m61_statistics m61_get_statistics() {
-    // Your code here.
-    // The handout code sets all statistics to enormous numbers.
+struct m61_statistics {
+    unsigned long long nactive;           // number of active allocations [#malloc - #free]
+    unsigned long long active_size;       // number of bytes in active allocations
+    unsigned long long ntotal;            // number of allocations, total
+    unsigned long long total_size;        // number of bytes in allocations, total
+    unsigned long long nfail;             // number of failed allocation attempts
+    unsigned long long fail_size;         // number of bytes in failed allocation attempts
+    uintptr_t heap_min;                   // smallest address in any region ever allocated
+    uintptr_t heap_max;                   // largest address in any region ever allocated
+};
     m61_statistics stats;
     memset(&stats, 255, sizeof(m61_statistics));
     return stats;
