@@ -103,7 +103,7 @@ struct m61_statistics {
     uintptr_t heap_max;                   // largest address in any region ever allocated
 };
     m61_statistics stats;
-    memset(&stats, 255, sizeof(m61_statistics));
+    memset(&stats, 0, sizeof(m61_statistics));
     return stats;
 }
 
