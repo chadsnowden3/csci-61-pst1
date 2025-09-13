@@ -43,12 +43,24 @@ m61_memory_buffer::~m61_memory_buffer() {
 ///    return either `nullptr` or a pointer to a unique allocation.
 ///    The allocation request was made at source code location `file`:`line`.
 
-void* m61_malloc(size_t sz, const char* file, int line) {
+static void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
     // Your code here.
-    if (default_buffer.pos + sz > default_buffer.size) {
+    for (allocation& a : freed allocation set) {
+    if (default_buffer.pos + sz > default_buffer.size)
+    if (a is at least sz bytes big) {
+            void* ptr = first byte in a;{
+            remove a from freed allocation set;
         // Not enough space left in default buffer for allocation
-        return nullptr;
+        // otherwise fail
+            return nullptr;
+    void* ptr1 = m61_malloc(3 << 20); // 3 megabytes
+    void* ptr2 = m61_malloc(3 << 20);
+    m61_free(ptr1);
+    m61_free(ptr2);
+    // Although the freed allocations are 3 MiB each, they can be coalesced, allowing this to succeed:
+    void* bigptr = m61_malloc(6 << 20); // 6 megabytes
+    assert(bigptr);
     }
 
     // Otherwise there is enough space; claim the next `sz` bytes
