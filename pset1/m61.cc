@@ -45,7 +45,7 @@ m61_memory_buffer::~m61_memory_buffer() {
 
 static void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
-    // Your code here.
+    ++gstats.ntotal; // Your code here.
     for (allocation& a : freed allocation set) {
     if (default_buffer.pos + sz > default_buffer.size)
     if (a is at least sz bytes big) {
@@ -107,16 +107,17 @@ m61_statistics m61_get_statistics() {
 struct m61_statistics {
     unsigned long long nactive;           // number of active allocations [#malloc - #free]
     unsigned long long active_size;       // number of bytes in active allocations
-    unsigned long long ntotal;            // number of allocations, total
+    static unsigned long long ntotal = 0;            // number of allocations, total
     unsigned long long total_size;        // number of bytes in allocations, total
     unsigned long long nfail;             // number of failed allocation attempts
     unsigned long long fail_size;         // number of bytes in failed allocation attempts
     uintptr_t heap_min;                   // smallest address in any region ever allocated
     uintptr_t heap_max;                   // largest address in any region ever allocated
 };
-    m61_statistics stats;
+    static m61_statistics gstats = {0,0,0,0,0,0,0,0};
     memset(&stats, 0, sizeof(m61_statistics));
-    return stats;
+    stats.ntotal = ntotal;
+    return gstats;
 }
 
 
