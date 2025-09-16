@@ -21,8 +21,8 @@ struct allocation_info {
     const char* file;
     int line;
     allocation info (void* p, size_t s, const char* f, int l)
-        : ptr(p), size(s), file(f), line(l) 
-}
+        : ptr(p), size(s), file(f), line(l) {}
+};
 
 static std::vector<m61_find_free_space> freed_blocks;
 
@@ -59,8 +59,12 @@ m61_memory_buffer::~m61_memory_buffer() {
 void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
     ++gstats.ntotal; 
+    gstats.total_size +=sz;
     for (allocation& a : freed allocation set) {
     if (default_buffer.pos + sz > default_buffer.size)
+    if (sz ==0){
+        return nullptr;
+    }
     if (a is at least sz bytes big) {
             void* ptr = first byte in a;{
             remove a from freed allocation set;
@@ -71,6 +75,10 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     void* ptr2 = m61_malloc(3 << 20);
     m61_free(ptr1);
     m61_free(ptr2);
+    uintptr_ptrvalue = reinterpret_cast<uintptr_t>(ptr);
+    if (gstats.heap_min == 0 || ptr_value < gstats.heap_min){
+        gstats.heap_min = ptr_value;
+    }
     // Although the freed allocations are 3 MiB each, they can be coalesced, allowing this to succeed:
     void* bigptr = m61_malloc(6 << 20); // 6 megabytes
     assert(bigptr);
