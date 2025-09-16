@@ -6,6 +6,8 @@
 #include <cinttypes>
 #include <cassert>
 #include <sys/mman.h>
+#include <map>
+#include <vector>
 
 static std::map<void*, size_t> active_sizes;
 
@@ -43,7 +45,7 @@ m61_memory_buffer::~m61_memory_buffer() {
 ///    return either `nullptr` or a pointer to a unique allocation.
 ///    The allocation request was made at source code location `file`:`line`.
 
-static void* m61_malloc(size_t sz, const char* file, int line) {
+void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
     ++gstats.ntotal; 
     for (allocation& a : freed allocation set) {
@@ -81,7 +83,6 @@ void m61_free(void* ptr, const char* file, int line) {
         return;
 }
 static void* m61_find_free_space(size_t sz) {
-    // do we have a freed allocation that will work?
     for (allocation& a : freed allocation set) {
         if (a is at least sz bytes big) {
             void* ptr = first byte in a;
@@ -102,6 +103,10 @@ static void* m61_find_free_space(size_t sz) {
 
 void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
     // Check for overflow
+    if (count != 0 && sz > SIZE_MAX / count) {
+        ++gstats.nfail;
+        gstats.fail_size += count *sz; // This might overflow, but for statistics
+        return nullptr;
     size_t total_size = count * sz;
     void* ptr = m61_malloc(total_size, file, line);
     if (ptr !=nullptr) {
