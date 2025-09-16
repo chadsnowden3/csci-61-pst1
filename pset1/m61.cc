@@ -7,6 +7,9 @@
 #include <cassert>
 #include <sys/mman.h>
 
+static std::map<void*, size_t> active_sizes;
+
+static std::vector<m61_memory_buffer> active_allocations;
 
 struct m61_memory_buffer {
     char* buffer;
@@ -80,7 +83,18 @@ void m61_free(void* ptr, const char* file, int line) {
     if (ptr = nullptr) {
         return;
 }
-
+static void* m61_find_free_space(size_t sz) {
+    // do we have a freed allocation that will work?
+    for (allocation& a : freed allocation set) {
+        if (a is at least sz bytes big) {
+            void* ptr = first byte in a;
+            remove a from freed allocation set;
+            return ptr;
+        }
+    }
+    // otherwise fail
+    return nullptr;
+}
 
 /// m61_calloc(count, sz, file, line)
 ///    Returns a pointer a fresh dynamic memory allocation big enough to
