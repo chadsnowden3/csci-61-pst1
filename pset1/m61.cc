@@ -13,6 +13,17 @@ static std::map<void*, size_t> active_sizes;
 
 static std::vector<m61_memory_buffer> active_allocations;
 
+static m61_statistics gstats = {0,0,0,0,0,0,0,0};
+
+struct allocation_info {
+    void* ptr;
+    size_t size;
+    const char* file;
+    int line;
+    allocation info (void* p, size_t s, const char* f, int l)
+        : ptr(p), size(s), file(f), line(l) 
+}
+
 static std::vector<m61_find_free_space> freed_blocks;
 
 struct m61_memory_buffer {
@@ -129,7 +140,6 @@ struct m61_statistics {
     uintptr_t heap_min;                   // smallest address in any region ever allocated
     uintptr_t heap_max;                   // largest address in any region ever allocated
 };
-    static m61_statistics gstats = {0,0,0,0,0,0,0,0};
     memset(&stats, 0, sizeof(m61_statistics));
     stats.ntotal = ntotal;
     return gstats;
