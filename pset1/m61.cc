@@ -11,6 +11,8 @@ static std::map<void*, size_t> active_sizes;
 
 static std::vector<m61_memory_buffer> active_allocations;
 
+static std::vector<m61_find_free_space> freed_blocks;
+
 struct m61_memory_buffer {
     char* buffer;
     size_t pos = 0;
