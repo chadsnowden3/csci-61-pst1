@@ -22,7 +22,6 @@ struct m61_memory_buffer {
 
 static m61_memory_buffer default_buffer;
 
-
 m61_memory_buffer::m61_memory_buffer() {
     void* buf = mmap(nullptr,    
         this->size,              
@@ -35,9 +34,6 @@ m61_memory_buffer::m61_memory_buffer() {
 m61_memory_buffer::~m61_memory_buffer() {
     munmap(this->buffer, this->size);
 }
-
-
-
 
 /// m61_malloc(sz, file, line)
 ///    Returns a pointer to `sz` bytes of freshly-allocated dynamic memory.
@@ -70,7 +66,6 @@ static void* m61_malloc(size_t sz, const char* file, int line) {
     default_buffer.pos += sz;
     return ptr;
 }
-
 
 /// m61_free(ptr, file, line)
 ///    Frees the memory allocation pointed to by `ptr`. If `ptr == nullptr`,
@@ -106,13 +101,12 @@ static void* m61_find_free_space(size_t sz) {
 void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
     // Check for overflow
     size_t total_size = count * sz;
-    void* ptr = m61_malloc(count * sz, file, line);
+    void* ptr = m61_malloc(total_size, file, line);
     if (ptr !=nullptr) {
-        memset(ptr, 0, count * sz); // clear memory to 0
+        memset(ptr, 0, total_size); // clear memory to 0
     }
     return ptr;
 }
-
 
 /// m61_get_statistics()
 ///    Return the current memory statistics.
