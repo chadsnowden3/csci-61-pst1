@@ -21,11 +21,10 @@ static m61_memory_buffer default_buffer;
 
 
 m61_memory_buffer::m61_memory_buffer() {
-    void* buf = mmap(nullptr,    // Place the buffer at a random address
-        this->size,              // Buffer should be 8 MiB big
-        PROT_WRITE,              // We want to read and write the buffer
+    void* buf = mmap(nullptr,    
+        this->size,              
+        PROT_READ | PROT_WRITE,              
         MAP_ANON | MAP_PRIVATE, -1, 0);
-                                 // We want memory freshly allocated by the OS
     assert(buf != MAP_FAILED);
     this->buffer = (char*) buf;
 }
@@ -45,7 +44,7 @@ m61_memory_buffer::~m61_memory_buffer() {
 
 static void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
-    ++gstats.ntotal; // Your code here.
+    ++gstats.ntotal; 
     for (allocation& a : freed allocation set) {
     if (default_buffer.pos + sz > default_buffer.size)
     if (a is at least sz bytes big) {
@@ -77,9 +76,9 @@ static void* m61_malloc(size_t sz, const char* file, int line) {
 ///    `file`:`line`.
 
 void m61_free(void* ptr, const char* file, int line) {
-    // avoid uninitialized variable warnings
-    (void) ptr, (void) file, (void) line;
-    // Your code here. The handout code does nothing!
+    (void) ptr, (void) file, (void) line;  // avoid uninitialized variable warnings
+    if (ptr = nullptr) {
+        return;
 }
 
 
@@ -91,7 +90,8 @@ void m61_free(void* ptr, const char* file, int line) {
 ///    also return `nullptr` if `count == 0` or `size == 0`.
 
 void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
-    // Your code here (not needed for first tests).
+    // Check for overflow
+    size_t total_size = count * sz;
     void* ptr = m61_malloc(count * sz, file, line);
     if (ptr !=nullptr) {
         memset(ptr, 0, count * sz); // clear memory to 0
@@ -138,5 +138,10 @@ void m61_print_statistics() {
 ///    memory.
 
 void m61_print_leak_report() {
-    // Your code here.
+    for (const auto& alloc : active_allocations) {
+        printf("Leak Check: %s:%d: allocated object %p with size %zu\n",
+            alloc.file ? alloc.file : "???",
+            alloc.line,
+            alloc.ptr,
+            alloc.size):
 }
