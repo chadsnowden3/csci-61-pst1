@@ -77,7 +77,7 @@ static void* m61_malloc(size_t sz, const char* file, int line) {
 
 void m61_free(void* ptr, const char* file, int line) {
     (void) ptr, (void) file, (void) line;  // avoid uninitialized variable warnings
-    if (ptr = nullptr) {
+    if (ptr == nullptr) {
         return;
 }
 static void* m61_find_free_space(size_t sz) {
@@ -130,7 +130,6 @@ struct m61_statistics {
     return gstats;
 }
 
-
 /// m61_print_statistics()
 ///    Prints the current memory statistics.
 
@@ -142,7 +141,6 @@ void m61_print_statistics() {
            stats.active_size, stats.total_size, stats.fail_size);
 }
 
-
 /// m61_print_leak_report()
 ///    Prints a report of all currently-active allocated blocks of dynamic
 ///    memory.
@@ -153,5 +151,5 @@ void m61_print_leak_report() {
             alloc.file ? alloc.file : "???",
             alloc.line,
             alloc.ptr,
-            alloc.size):
+            alloc.size);
 }
