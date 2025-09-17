@@ -6,7 +6,6 @@
 #include <cinttypes>
 #include <cassert>
 #include <sys/mman.h>
-#include <map>
 #include <vector>
 
 struct allocation_info {
@@ -14,11 +13,11 @@ struct allocation_info {
     size_t size;
     const char* file;
     int line;
-    allocation info (void* p, size_t s, const char* f, int l)
+    allocation_info (void* p, size_t s, const char* f, int l)
         : ptr(p), size(s), file(f), line(l) {}
 };
 
-static std::vector<allication_info> active_allocations;
+static std::vector<allocation_info> active_allocations;
 static m61_statistics gstats = {0,0,0,0,0,0,0,0};
 
 struct m61_memory_buffer {
@@ -26,7 +25,7 @@ struct m61_memory_buffer {
     size_t pos = 0;
     size_t size = 8 << 20; /* 8 MiB */
 
-    m61_memory_buffer(); {
+    m61_memory_buffer() {
         void* buf = mmap(nullptr, size,              
         PROT_READ | PROT_WRITE,              
         MAP_ANON | MAP_PRIVATE, -1, 0);
