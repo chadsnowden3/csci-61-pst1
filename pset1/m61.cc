@@ -6,6 +6,11 @@
 #include <cinttypes>
 #include <cassert>
 #include <vector>
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#else
+#include <sys/mman.h>
+#endif
 
 struct allocation_info {
     void* ptr;
@@ -25,14 +30,23 @@ struct m61_memory_buffer {
     size_t size = 8 << 20; /* 8 MiB */
 
     m61_memory_buffer() {
+#if defined(_WIN32) || defined(_WIN64)
+        buffer = (char*) VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        assert(buffer != nullptr);
+#else        
         void* buf = mmap(nullptr, size,              
         PROT_READ | PROT_WRITE,              
         MAP_ANON | MAP_PRIVATE, -1, 0);
         assert(buf != MAP_FAILED);
         buffer = (char*) buf;
+#endif
     }
     ~m61_memory_buffer(); {
+#if defined(_WIN32) || defined(_WIN64)
+        VirtualFree(buffer, 0, MEM_RELEASE);
+#else
         munmap(buffer, size);
+#endif
     }
 };
 
