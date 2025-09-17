@@ -1,11 +1,10 @@
-#include "m61.hh"
+#include "m61.hh" \\ https://github.com/cs61/cs61-f25-psets/blob/main/pset1/m61.hh
 #include <cstdlib>
 #include <cstddef>
 #include <cstring>
 #include <cstdio>
 #include <cinttypes>
 #include <cassert>
-#include <sys/mman.h>
 #include <vector>
 
 struct allocation_info {
@@ -86,7 +85,8 @@ void m61_free(void* ptr, const char* file, int line) {
             return;
         }
     }
-    // Optionally, print an error for double free or invalid free
+    fprintf(stderr, "Invalid free or double free at %s:%d for pointer %p\n",
+            file ? file : "???", line, ptr);
 }
 
 /// m61_calloc(count, sz, file, line)
