@@ -9,12 +9,6 @@
 #include <map>
 #include <vector>
 
-static std::map<void*, size_t> active_sizes;
-
-static std::vector<m61_memory_buffer> active_allocations;
-
-static m61_statistics gstats = {0,0,0,0,0,0,0,0};
-
 struct allocation_info {
     void* ptr;
     size_t size;
@@ -24,31 +18,27 @@ struct allocation_info {
         : ptr(p), size(s), file(f), line(l) {}
 };
 
-static std::vector<m61_find_free_space> freed_blocks;
+static std::vector<allication_info> active_allocations;
+static m61_statistics gstats = {0,0,0,0,0,0,0,0};
 
 struct m61_memory_buffer {
     char* buffer;
     size_t pos = 0;
     size_t size = 8 << 20; /* 8 MiB */
 
-    m61_memory_buffer();
-    ~m61_memory_buffer();
+    m61_memory_buffer(); {
+        void* buf = mmap(nullptr, size,              
+        PROT_READ | PROT_WRITE,              
+        MAP_ANON | MAP_PRIVATE, -1, 0);
+        assert(buf != MAP_FAILED);
+        buffer = (char*) buf;
+    }
+    ~m61_memory_buffer(); {
+        munmap(buffer, size);
+    }
 };
 
 static m61_memory_buffer default_buffer;
-
-m61_memory_buffer::m61_memory_buffer() {
-    void* buf = mmap(nullptr,    
-        this->size,              
-        PROT_READ | PROT_WRITE,              
-        MAP_ANON | MAP_PRIVATE, -1, 0);
-    assert(buf != MAP_FAILED);
-    this->buffer = (char*) buf;
-}
-
-m61_memory_buffer::~m61_memory_buffer() {
-    munmap(this->buffer, this->size);
-}
 
 /// m61_malloc(sz, file, line)
 ///    Returns a pointer to `sz` bytes of freshly-allocated dynamic memory.
@@ -57,36 +47,27 @@ m61_memory_buffer::~m61_memory_buffer() {
 ///    The allocation request was made at source code location `file`:`line`.
 
 void* m61_malloc(size_t sz, const char* file, int line) {
-    (void) file, (void) line;   // avoid uninitialized variable warnings
-    ++gstats.ntotal; 
-    gstats.total_size +=sz;
-    for (allocation& a : freed allocation set) {
-    if (default_buffer.pos + sz > default_buffer.size)
-    if (sz ==0){
+    if (sz == 0 || default_buffer.pos +sz > default_buffer.size) {
+        ++gstats.nfail;
+        gstats.fail_size += sz;
         return nullptr;
     }
-    if (a is at least sz bytes big) {
-            void* ptr = first byte in a;{
-            remove a from freed allocation set;
-        // Not enough space left in default buffer for allocation
-        // otherwise fail
-            return nullptr;
-    void* ptr1 = m61_malloc(3 << 20); // 3 megabytes
-    void* ptr2 = m61_malloc(3 << 20);
-    m61_free(ptr1);
-    m61_free(ptr2);
-    uintptr_ptrvalue = reinterpret_cast<uintptr_t>(ptr);
-    if (gstats.heap_min == 0 || ptr_value < gstats.heap_min){
-        gstats.heap_min = ptr_value;
-    }
-    // Although the freed allocations are 3 MiB each, they can be coalesced, allowing this to succeed:
-    void* bigptr = m61_malloc(6 << 20); // 6 megabytes
-    assert(bigptr);
-    }
-
-    // Otherwise there is enough space; claim the next `sz` bytes
     void* ptr = &default_buffer.buffer[default_buffer.pos];
-    default_buffer.pos += sz;
+    default_buffer.pos +=sz;
+
+    active_allocations.emplace_back(ptr, sz, file, line);
+    
+    ++gstats.ntotal; 
+    gstats.total_size +=sz;
+    ++gstats.nactive;
+    gstats.active_size += sz;
+
+    uintptr_t ptr_value = reinterpret_cast<uintptr_t>(ptr);
+    if (gstats.heap_min == 0 || ptr_value < gstats.heap_min)
+        gstats.heap_min = ptr_value;
+    if (ptr_value + sz - 1 > gstats.heap_max)
+        gstats.heap_max = ptr_value + sz - 1;
+
     return ptr;
 }
 
@@ -97,20 +78,16 @@ void* m61_malloc(size_t sz, const char* file, int line) {
 ///    `file`:`line`.
 
 void m61_free(void* ptr, const char* file, int line) {
-    (void) ptr, (void) file, (void) line;  // avoid uninitialized variable warnings
-    if (ptr == nullptr) {
-        return;
-}
-static void* m61_find_free_space(size_t sz) {
-    for (allocation& a : freed allocation set) {
-        if (a is at least sz bytes big) {
-            void* ptr = first byte in a;
-            remove a from freed allocation set;
-            return ptr;
+    if (!ptr) return;
+    for (auto it = active_allocations.begin(); it != active_allocations.end(); ++it) {
+        if (it->ptr == ptr) {
+            gstats.nactive--;
+            gstats.active_size -= it->size;
+            active_allocations.erase(it);
+            return;
         }
     }
-    // otherwise fail
-    return nullptr;
+    // Optionally, print an error for double free or invalid free
 }
 
 /// m61_calloc(count, sz, file, line)
@@ -122,15 +99,15 @@ static void* m61_find_free_space(size_t sz) {
 
 void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
     // Check for overflow
-    if (count != 0 && sz > SIZE_MAX / count) {
+    if (count && sz > SIZE_MAX / count) {
         ++gstats.nfail;
         gstats.fail_size += count *sz; // This might overflow, but for statistics
         return nullptr;
+    }
     size_t total_size = count * sz;
     void* ptr = m61_malloc(total_size, file, line);
-    if (ptr !=nullptr) {
-        memset(ptr, 0, total_size); // clear memory to 0
-    }
+    if (ptr) 
+        memset(ptr, 0, total_size);
     return ptr;
 }
 
@@ -138,18 +115,6 @@ void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
 ///    Return the current memory statistics.
 
 m61_statistics m61_get_statistics() {
-struct m61_statistics {
-    unsigned long long nactive;           // number of active allocations [#malloc - #free]
-    unsigned long long active_size;       // number of bytes in active allocations
-    static unsigned long long ntotal = 0;            // number of allocations, total
-    unsigned long long total_size;        // number of bytes in allocations, total
-    unsigned long long nfail;             // number of failed allocation attempts
-    unsigned long long fail_size;         // number of bytes in failed allocation attempts
-    uintptr_t heap_min;                   // smallest address in any region ever allocated
-    uintptr_t heap_max;                   // largest address in any region ever allocated
-};
-    memset(&stats, 0, sizeof(m61_statistics));
-    stats.ntotal = ntotal;
     return gstats;
 }
 
@@ -175,4 +140,5 @@ void m61_print_leak_report() {
             alloc.line,
             alloc.ptr,
             alloc.size);
+    }
 }
